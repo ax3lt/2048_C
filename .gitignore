@@ -1,2 +1,4 @@
 # Project exclude paths
 /cmake-build-debug/
+2048.dat
+2048.db

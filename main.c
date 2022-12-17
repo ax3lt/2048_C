@@ -5,8 +5,33 @@
 #include <stdbool.h>
 #include "Libraries/SQLite3/sqlite3.h"
 
+#define DOC
+#define ENDDOC
 
-// Per SQLITE3 bisogna installare una libreria esterna con il comando: sudo apt install libsqlite3-dev
+DOC
+/*
+ *
+ *   • Il programma funziona su sistemi UNIX/Linux
+ *   • Per compilare il programma è necessario installare la libreria SQLite3 (sudo apt-get install libsqlite3-dev) e compilare con il comando gcc 2048.c -o 2048 -lsqlite3
+ *   • Il programma crea un database SQLite3 chiamato "2048.db" nella cartella in cui è stato eseguito
+ *   • Codici di uscita:
+ *       • 0: Esecuzione terminata correttamente
+ *       • 1: Uscita dal programma tramite tasto 'q'
+ *       • 2: Uscita per sconfitta
+ *
+ *       • 10 Errore generico SQLITE3
+ *       • 20 Errore apertura DB
+ *       • 30 Errore preparazione query
+ *       • 40 Errore nella query (DB side)
+ *       • 100 Errore apertura file di salvataggio
+ *       • 110 File di salvataggio non valido (numero non possibile in 2048)
+ *       • 120 File di salvataggio non valido (quantita' numeri non corretta)
+*/
+ENDDOC
+
+
+
+
 
 
 // define ANSI colors
@@ -86,7 +111,8 @@ bool debugMode = false;
 
 int main(int argc, char *argv[]) {
 
-    if(containsParam(argc, argv, "-d")) { // se il programma viene lanciato con il parametro -d, attiva la modalità debug
+    if (containsParam(argc, argv,
+                      "-d")) { // se il programma viene lanciato con il parametro -d, attiva la modalità debug
         debugMode = true;
     }
     initializeDB();
@@ -117,7 +143,7 @@ int main(int argc, char *argv[]) {
         exit(0);
     }
     fflush(stdin);
-    if(tmp == 'C' || tmp == 'c') {
+    if (tmp == 'C' || tmp == 'c') {
         loadGame("2048.dat", board); // carica la partita salvata
     } else {
         initializeBoard(board);
@@ -131,10 +157,10 @@ int main(int argc, char *argv[]) {
         printf(ANSI_COLOR_GREEN "🚀 Punteggio: %d" ANSI_RESET "\n\n", board->score);
         printBoard(board);
         printf("• Usa WASD o le freccie per muoverti\n"
-                     "• Q per uscire"
-                     "• R per ricominciare\n"
-                     "• F per salvare\n"
-                     "• Per visualizzare la leatherboard oppure per caricare una partita riavvia il programma\n");
+               "• Q per uscire\n"
+               "• R per ricominciare\n"
+               "• F per salvare\n"
+               "• Per visualizzare la leatherboard oppure per caricare una partita riavvia il programma\n");
 
 
         system("/bin/stty -echo");  // Disabilita l'echo dei tasti premuti
@@ -165,15 +191,14 @@ int main(int argc, char *argv[]) {
         system("/bin/stty cooked"); // Riabilita il buffering dei tasti premuti
 
 
-        if(c == 'f' || c == 'F') {
+        if (c == 'f' || c == 'F') {
             saveGame(board);
             validMove = false;
             if (debugMode)
                 printf("Partita salvata!\n");
-        }
-        else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
+        } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
             printf(ANSI_BG_RED "\nHai scelto di uscire dal gioco\n" ANSI_RESET);
-            exit(0);
+            exit(1);
         } else if (c == 'r' || c == 'R') { // <-- Reimposto la tabella e rimetto i valori iniziali
             printf("Hai scelto di reiniziare il gioco\n");
             initializeBoard(board);
@@ -227,17 +252,17 @@ int main(int argc, char *argv[]) {
                    "                                                                          "
                    ANSI_RESET);
 
-            printf(ANSI_COLOR_RED "\nHai perso!\n Il tuo punteggio è %d\n" ANSI_RESET, board->score);
+            printf(ANSI_COLOR_RED "\nIl tuo punteggio finale è di: %d\n\n" ANSI_RESET, board->score);
             // prompt to save the score
-            printf("Vuoi salvare il tuo punteggio? (s/n)\n");
+            printf("Vuoi salvare il tuo punteggio? (S/n): ");
             char save;
             scanf(" %c", &save);
             if (save == 's' || save == 'S') {
                 // prompt the username
-                printf("Inserisci il tuo nome utente: ");
-                char username[10];
-                scanf("%s", username);
-                // save the score
+                printf("Inserisci il tuo nome utente (massimo 5 caratteri): ");
+                char username[5];
+                scanf("%5s", username); // 5 caratteri max
+                // Salvo il punteggio
                 if (getScore(username) == 0) {
                     addScore(username, board->score);
                 } else {
@@ -256,7 +281,7 @@ int main(int argc, char *argv[]) {
             c = getchar();
             system("/bin/stty echo");
             system("/bin/stty cooked");
-            exit(0);
+            exit(2);
         }
 
         if (debugMode)
@@ -308,37 +333,23 @@ void printBoard(Board *board) {
     // Tabella con i valori colorata
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if (board->board[i][j] == 0)
-                printf("│    ");
-            else if (board->board[i][j] == 2)
-                printf("│" ANSI_COLOR_CYAN " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 4)
-                printf("│" ANSI_COLOR_BLUE " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 8)
-                printf("│" ANSI_COLOR_YELLOW " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 16)
-                printf("│" ANSI_COLOR_GREEN " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 32)
-                printf("│" ANSI_COLOR_MAGENTA " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 64)
-                printf("│" ANSI_COLOR_RED " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 128)
-                printf("│" ANSI_COLOR_CYAN "%d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 256)
-                printf("│" ANSI_COLOR_BLUE "%d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 512)
-                printf("│" ANSI_COLOR_YELLOW " %d" ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 1024)
-                printf("│" ANSI_COLOR_GREEN "%d" ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 2048)
-                printf("│" ANSI_COLOR_MAGENTA "%d" ANSI_RESET, board->board[i][j]);
-            else
-                printf("│" ANSI_COLOR_RED " %d " ANSI_RESET, board->board[i][j]);
+            if (board->board[i][j] == 0) printf("│    ");
+            else if (board->board[i][j] == 2) printf("│" ANSI_COLOR_CYAN " %d  " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 4) printf("│" ANSI_COLOR_BLUE " %d  " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 8) printf("│" ANSI_COLOR_YELLOW " %d  " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 16) printf("│" ANSI_COLOR_GREEN " %d " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 32) printf("│" ANSI_COLOR_MAGENTA " %d " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 64) printf("│" ANSI_COLOR_RED " %d " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 128) printf("│" ANSI_COLOR_CYAN "%d " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 256) printf("│" ANSI_COLOR_BLUE "%d " ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 512) printf("│" ANSI_COLOR_YELLOW " %d" ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 1024) printf("│" ANSI_COLOR_GREEN "%d" ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 2048) printf("│" ANSI_COLOR_MAGENTA "%d" ANSI_RESET, board->board[i][j]);
+            else printf("│" ANSI_COLOR_RED " %d " ANSI_RESET, board->board[i][j]);
         }
         printf("│\n");
-        if (i != 3) {
+        if (i != 3)
             printf("├────┼────┼────┼────┤\n");
-        }
     }
     printf("└────┴────┴────┴────┘\n");
 }
@@ -533,7 +544,7 @@ void initializeDB() { // Creo la tabella per salvare i punteggi se non esiste gi
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nell'apertura del DB: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(20);
     }
     char *sql = "CREATE TABLE IF NOT EXISTS leatherboard (" // Salvataggio dati dei punteggi
                 "   id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -547,7 +558,7 @@ void initializeDB() { // Creo la tabella per salvare i punteggi se non esiste gi
         fprintf(stderr, "SQL error: %s\n", err_msg);
         sqlite3_free(err_msg);
         sqlite3_close(db);
-        exit(1);
+        exit(10);
     }
     sqlite3_close(db);
 }
@@ -560,7 +571,7 @@ int getScore(char *username) {  // Ottengo il punteggio massimo di un utente
     if (rc != SQLITE_OK) {  // Controllo se il DB esiste
         fprintf(stderr, "Errore nell'apertura del DB: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(20);
     }
     char *sql = "SELECT score FROM leatherboard WHERE name = ?;";
     sqlite3_stmt *stmt;
@@ -568,7 +579,7 @@ int getScore(char *username) {  // Ottengo il punteggio massimo di un utente
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nella preparazione della query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(30);
     }
     sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);    // Sostituisco il ? con username
     rc = sqlite3_step(stmt);    // Eseguo la query
@@ -590,7 +601,7 @@ void addScore(char *username, int score) {  // Aggiungo un punteggio per un uten
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nell'apertura del DB: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(20);
     }
     char *sql = "INSERT INTO leatherboard (score, name) VALUES (?, ?);";
     sqlite3_stmt *stmt;
@@ -598,7 +609,7 @@ void addScore(char *username, int score) {  // Aggiungo un punteggio per un uten
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nella preparazione della query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(30);
     }
     sqlite3_bind_int(stmt, 1, score);
     sqlite3_bind_text(stmt, 2, username, -1, SQLITE_STATIC);
@@ -606,20 +617,21 @@ void addScore(char *username, int score) {  // Aggiungo un punteggio per un uten
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Errore nella query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(40);
     }
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 }
 
-void updateScore(char *username, int score) {   // Se esiste gia' un punteggio per l'utente lo aggiorno (la funzione non controlla, controllo necessario prima di chiamare la funzione)
+void updateScore(char *username,
+                 int score) {   // Se esiste gia' un punteggio per l'utente lo aggiorno (la funzione non controlla, controllo necessario prima di chiamare la funzione)
     sqlite3 *db;
     char *err_msg = 0;
     int rc = sqlite3_open("2048.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nell'apertura del DB: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(20);
     }
     char *sql = "UPDATE leatherboard SET score = ? WHERE name = ?;";
     sqlite3_stmt *stmt;
@@ -627,7 +639,7 @@ void updateScore(char *username, int score) {   // Se esiste gia' un punteggio p
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nella preparazione della query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(30);
     }
     sqlite3_bind_int(stmt, 1, score);
     sqlite3_bind_text(stmt, 2, username, -1, SQLITE_STATIC);
@@ -635,7 +647,7 @@ void updateScore(char *username, int score) {   // Se esiste gia' un punteggio p
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Errore nella query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(40);
     }
     sqlite3_finalize(stmt);
     sqlite3_close(db);
@@ -648,27 +660,32 @@ void printLeaderboard() {   // Stampa la classifica
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nell'apertura del DB: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(20);
     }
-    char *sql = "SELECT name, score, date FROM leatherboard ORDER BY score DESC, date ASC LIMIT 10;";
+    char *sql = "SELECT name, score, date FROM leatherboard ORDER BY score DESC, date ASC LIMIT 10;"; // Solo i primi 10, ordinati per punteggio e data
     sqlite3_stmt *stmt;
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Errore nella preparazione della query: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        exit(1);
+        exit(30);
     }
     int cont = 0;
+    printf("        " ANSI_BG_MAGENTA "LEATHERBOARD 2048\n\n" ANSI_RESET);
     printf("  Punti   |   Nome   |        Data  \n");
     printf("----------+----------+--------------------\n");
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
         char *name = (char *) sqlite3_column_text(stmt, 0);
+        char name2[5];
+        strncpy(name2, name, 4);
         int score = sqlite3_column_int(stmt, 1);
         char *date = (char *) sqlite3_column_text(stmt, 2);
-        printf("%9d | %8s | %s \n", score, name, date);
+        printf("%9d | %8.*s | %s \n", score, 5, name,
+               date); // I numeri servono per allineare la stampa (9 -> 9 spazi occupati, poi prende quelli del numero e li rimpiazza, se usavo -9 allieanemnto a sinistra)
+        // Invice il .* prende i primi 5 caratteri della stringa (se la stringa e' piu' corta prende meno)
         cont++;
     }
-    if(cont == 0) {
+    if (cont == 0) {
         printf("      Nessun punteggio salvato.\n");
     }
     sqlite3_finalize(stmt);
@@ -679,14 +696,13 @@ void saveGame(Board *b) // Salva la partita in corso
 {
     FILE *fp;
     fp = fopen("2048.dat", "w");
-    if (fp == NULL)
-    {
-        printf("Errore nell'apertura del file.\n");
-        exit(1);
-    }
+//    if (fp == NULL)
+//    {
+//        printf("Errore nell'apertura del file.\n");       // Non necessario? Con w crea il file se non esiste
+//        exit(100);
+//    }
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            // save b.board[i][j]
             fprintf(fp, "%d\n", b->board[i][j]);
         }
     }
@@ -701,20 +717,31 @@ bool containsParam(int argc, char *argv[], char *param) { // Implementazione per
     return false;
 }
 
-void loadGame(char *filename, Board *b){    // Carica una partita salvata (dal file 2048.dat, possibile ampliamento)
+void loadGame(char *filename, Board *b) {    // Carica una partita salvata (dal file 2048.dat, possibile ampliamento)
     FILE *fp;
     fp = fopen(filename, "r");
-    if (fp == NULL)
-    {
+    if (fp == NULL) {
         printf("Errore nell'apertura del file.\n");
-        exit(1);
+        exit(100);
     }
+    int cont = 0;
     char line[10];
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             // load b.board[i][j]
             fgets(line, 10, fp);
+            if (atoi(line) != 0 && atoi(line) != 2 && atoi(line) != 4 && atoi(line) != 8 && atoi(line) != 16 && atoi(line) != 32 &&
+                atoi(line) != 64 && atoi(line) != 128 && atoi(line) != 256 && atoi(line) != 512 && atoi(line) != 1024 &&
+                atoi(line) != 2048) {
+                printf("File di salvataggio del gioco non valido.%d\n", atoi(line));
+                exit(110);
+            }
             b->board[i][j] = atoi(line); // salvo il valore letto in board
+            cont++;
+            if (cont > 16) { // Se il file e' piu' lungo di 16 righe non e' valido
+                printf("File di salvataggio del gioco non valido.\n");
+                exit(120);
+            }
         }
     }
 }

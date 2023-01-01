@@ -8,7 +8,7 @@ Welcome to 2048, a game written in C!
 
 ## Features
 
-- Uses a database to store a leaderboard
+- Uses a database (SQLite3) to store a leaderboard
 - You can save your progress during the game and resume later
 - Debug mode available by running the game with the `-d` parameter
 

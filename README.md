@@ -4,6 +4,8 @@
 
 Welcome to 2048, a game written in C!
 
+**_I made this game as a project for my C programming course at the University of Milan._**
+
 ## Features
 
 - Uses a database to store a leaderboard

@@ -31,9 +31,12 @@ int main(int argc, char *argv[]) {
     Board *board = malloc(sizeof(Board));
     gameHandler(board);
 
-//    system("chmod +x script.sh");
+
+//    system("chmod +x script.sh"); //TODO: rimuovere
 //    system("./script.sh");
 }
+
+
 
 
 

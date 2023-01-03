@@ -1,6 +1,148 @@
 #include "../Database/DB_logic.c"
 #include "Game_logic.h"
 
+void gameHandler(Board *board) {
+    initializeDB();
+    printWelcomeMessage();
+    board->dimX = 4; // Valori di default
+    board->dimY = 4;
+    char tmp;
+    system("stty raw");
+    system("stty -echo");
+    tmp = getchar();
+    //scanf("%c", &tmp);
+    system("stty cooked");
+    system("stty echo");
+    if (tmp == 's' || tmp == 'S') {
+        setGridDimension(board);
+    }
+    if (tmp == 'L' || tmp == 'l') {
+        system("clear");
+        printLeaderboard();
+        exit(0);
+    }
+
+    if (tmp == 'C' || tmp == 'c') {
+        loadGame("2048.dat", board); // carica la partita salvata
+    } else {
+        initializeBoard(board);
+        fillInitialValues(board);
+    }
+    fflush(stdin); // Cancello enter dal buffer
+    system("clear");
+
+    bool gameSaved = false;
+    while (1) {
+        // save current board
+
+        bool validMove = false;  // Controllo se possibile fare un movimento valido
+        bool restart = false;   // Controllo se è stato premuto R
+        printf(ANSI_COLOR_GREEN "🚀 Punteggio: %d" ANSI_RESET "\n\n", board->score);
+        if(gameSaved) {
+            printf(ANSI_COLOR_GREEN "✅ Partita salvata con successo" ANSI_RESET "\n\n");
+            gameSaved = false;
+        }
+        printBoard(board);
+        printf("\U0001F449 Usa WASD o le freccie per muoverti\n"
+               "\U0001F449 Q per uscire\n"
+               "\U0001F449 R per ricominciare\n"
+               "\U0001F449 F per salvare\n"
+               "❔ Per visualizzare la leaderboard oppure per caricare una partita riavvia il programma\n");
+
+
+        system("/bin/stty -echo");  // Disabilita l'echo dei tasti premuti
+        system("/bin/stty raw");    // Disabilita il buffering dei tasti premuti -> legge i tasti premuti immediatamente (senza premere invio)
+
+        int c;
+        do {
+            c = getchar();
+
+            if (c == 27) {  // Controllo se è stato premuto un tasto di direzione (usano tre codici ASCII)
+                c = getchar();
+                if (c == 91) {
+                    c = getchar();
+                    if (c == 68)
+                        c = 'a';
+                    else if (c == 65)
+                        c = 'w';
+                    else if (c == 66)
+                        c = 's';
+                    else if (c == 67)
+                        c = 'd';
+                }
+            }
+        } while (c != 'w' && c != 'a' && c != 's' && c != 'd' && c != 'q' && c != 'r' && c != 'W' && c != 'A' &&
+                 c != 'S' && c != 'D' && c != 'Q' && c != 'R' && c != 'f' && c != 'F' && c != 'z' && c != 'Z');
+
+        system("/bin/stty echo");   // Riabilita l'echo dei tasti premuti
+        system("/bin/stty cooked"); // Riabilita il buffering dei tasti premuti
+
+
+        if (c == 'f' || c == 'F') {
+            saveGame(board);
+            gameSaved = true;
+            if (debugMode)
+                printf("Partita salvata!\n");
+        } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
+            printf(ANSI_BG_RED "\nHai scelto di uscire dal gioco\n" ANSI_RESET);
+            memoryFree(board);
+            exit(1);
+        } else if (c == 'r' || c == 'R') { // <-- Reimposto la tabella e rimetto i valori iniziali
+            printf("Hai scelto di reiniziare il gioco\n");
+            initializeBoard(board);
+            fillInitialValues(board);
+            restart = true;
+            system("clear");
+        } else if(c == 'z' || c == 'Z') {
+            system("clear");
+            printLeaderboard();
+        }
+        else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
+            if (canMoveUp(board)) {
+                moveUp(board);
+                validMove = true;
+            } else {
+                validMove = false;
+            }
+        } else if (c == 'a' || c == 'A') {  // <-- Muovo verso sinistra
+            if (canMoveLeft(board)) {
+                moveLeft(board);
+                validMove = true;
+            } else {
+                validMove = false;
+            }
+        } else if (c == 's' || c == 'S') {  // <-- Muovo verso il basso
+            if (canMoveDown(board)) {
+                moveDown(board);
+                validMove = true;
+            } else {
+                validMove = false;
+            }
+        } else if (c == 'd' || c == 'D') {  // <-- Muovo verso destra
+            if (canMoveRight(board)) {
+                moveRight(board);
+                validMove = true;
+            } else {
+                validMove = false;
+            }
+        }
+
+
+        if (!restart &&
+            validMove) {    // <-- Se non è stato premuto R e se è stato premuto un tasto valido posso aggiungere un nuovo valore
+            addNewRandom(board);
+        }
+        system("clear");
+        if (!canMove(board)) {  // <-- Se non è possibile muovere nessuna casella il gioco è finito
+            loseHandler(board);
+        }
+
+        if (debugMode)
+            printf("Movimento possibile: %s\n", canMove(board) ? "Si" : "No");
+    }
+}
+
+
 void initializeBoard(Board *board) {
     board->board = calloc(board->dimX, sizeof(int *));
     board->score = 0;
@@ -8,6 +150,15 @@ void initializeBoard(Board *board) {
         for (int j = 0; j < board->dimY; j++) {
             board->board[i] = calloc(board->dimY, sizeof(int));
             board->board[i][j] = 0;
+        }
+    }
+
+    // initialize second board
+    board->lastBoard = calloc(board->dimX, sizeof(int *));
+    for (int i = 0; i < board->dimX; i++) {
+        for (int j = 0; j < board->dimY; j++) {
+            board->lastBoard[i] = calloc(board->dimY, sizeof(int));
+            board->lastBoard[i][j] = 0;
         }
     }
 }
@@ -396,137 +547,6 @@ void printLoseMessage() {
            ANSI_RESET);
 }
 
-void gameHandler(Board *board) {
-    initializeDB();
-    printWelcomeMessage();
-    board->dimX = 4; // Valori di default
-    board->dimY = 4;
-    char tmp;
-    system("stty raw");
-    system("stty -echo");
-    tmp = getchar();
-    //scanf("%c", &tmp);
-    system("stty cooked");
-    system("stty echo");
-    if (tmp == 's' || tmp == 'S') {
-        setGridDimension(board);
-    }
-    if (tmp == 'L' || tmp == 'l') {
-        system("clear");
-        printLeaderboard();
-        exit(0);
-    }
-
-    if (tmp == 'C' || tmp == 'c') {
-        loadGame("2048.dat", board); // carica la partita salvata
-    } else {
-        initializeBoard(board);
-        fillInitialValues(board);
-    }
-    fflush(stdin); // Cancello enter dal buffer
-    system("clear");
-
-    bool gameSaved = false;
-    while (1) {
-        bool validMove = true;  // Controllo se possibile fare un movimento valido
-        bool restart = false;   // Controllo se è stato premuto R
-        printf(ANSI_COLOR_GREEN "🚀 Punteggio: %d" ANSI_RESET "\n\n", board->score);
-        if(gameSaved) {
-            printf(ANSI_COLOR_GREEN "✅ Partita salvata con successo" ANSI_RESET "\n\n");
-            gameSaved = false;
-        }
-        printBoard(board);
-        printf("\U0001F449 Usa WASD o le freccie per muoverti\n"
-               "\U0001F449 Q per uscire\n"
-               "\U0001F449 R per ricominciare\n"
-               "\U0001F449 F per salvare\n"
-               "❔ Per visualizzare la leaderboard oppure per caricare una partita riavvia il programma\n");
-
-
-        system("/bin/stty -echo");  // Disabilita l'echo dei tasti premuti
-        system("/bin/stty raw");    // Disabilita il buffering dei tasti premuti -> legge i tasti premuti immediatamente (senza premere invio)
-
-        int c;
-        do {
-            c = getchar();
-
-            if (c == 27) {  // Controllo se è stato premuto un tasto di direzione (usano tre codici ASCII)
-                c = getchar();
-                if (c == 91) {
-                    c = getchar();
-                    if (c == 68)
-                        c = 'a';
-                    else if (c == 65)
-                        c = 'w';
-                    else if (c == 66)
-                        c = 's';
-                    else if (c == 67)
-                        c = 'd';
-                }
-            }
-        } while (c != 'w' && c != 'a' && c != 's' && c != 'd' && c != 'q' && c != 'r' && c != 'W' && c != 'A' &&
-                 c != 'S' && c != 'D' && c != 'Q' && c != 'R' && c != 'f' && c != 'F' && c != 'c' && c != 'C');
-
-        system("/bin/stty echo");   // Riabilita l'echo dei tasti premuti
-        system("/bin/stty cooked"); // Riabilita il buffering dei tasti premuti
-
-
-        if (c == 'f' || c == 'F') {
-            saveGame(board);
-            gameSaved = true;
-            validMove = false;
-            if (debugMode)
-                printf("Partita salvata!\n");
-        } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
-            printf(ANSI_BG_RED "\nHai scelto di uscire dal gioco\n" ANSI_RESET);
-            memoryFree(board);
-            exit(1);
-        } else if (c == 'r' || c == 'R') { // <-- Reimposto la tabella e rimetto i valori iniziali
-            printf("Hai scelto di reiniziare il gioco\n");
-            initializeBoard(board);
-            fillInitialValues(board);
-            restart = true;
-            system("clear");
-        } else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
-            if (canMoveUp(board)) {
-                moveUp(board);
-            } else {
-                validMove = false;
-            }
-        } else if (c == 'a' || c == 'A') {  // <-- Muovo verso sinistra
-            if (canMoveLeft(board)) {
-                moveLeft(board);
-            } else {
-                validMove = false;
-            }
-        } else if (c == 's' || c == 'S') {  // <-- Muovo verso il basso
-            if (canMoveDown(board)) {
-                moveDown(board);
-            } else {
-                validMove = false;
-            }
-        } else if (c == 'd' || c == 'D') {  // <-- Muovo verso destra
-            if (canMoveRight(board)) {
-                moveRight(board);
-            } else {
-                validMove = false;
-            }
-        }
-
-
-        if (!restart &&
-            validMove) {    // <-- Se non è stato premuto R e se è stato premuto un tasto valido posso aggiungere un nuovo valore
-            addNewRandom(board);
-        }
-        system("clear");
-        if (!canMove(board)) {  // <-- Se non è possibile muovere nessuna casella il gioco è finito
-            loseHandler(board);
-        }
-
-        if (debugMode)
-            printf("Movimento possibile: %s\n", canMove(board) ? "Si" : "No");
-    }
-}
 
 void loseHandler(Board *board) {
     printLoseMessage();

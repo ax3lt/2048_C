@@ -6,6 +6,7 @@
 typedef struct {
 //    int board[4][4];
     int **board;
+    int **lastBoard;
     int dimX;
     int dimY;
     int score;

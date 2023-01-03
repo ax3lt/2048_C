@@ -32,21 +32,39 @@ void gameHandler(Board *board) {
     system("clear");
 
     bool gameSaved = false;
+    bool firstRound = true;
+    char error[100];
     while (1) {
         // save current board
 
         bool validMove = false;  // Controllo se possibile fare un movimento valido
         bool restart = false;   // Controllo se è stato premuto R
-        printf(ANSI_COLOR_GREEN "🚀 Punteggio: %d" ANSI_RESET "\n\n", board->score);
-        if(gameSaved) {
-            printf(ANSI_COLOR_GREEN "✅ Partita salvata con successo" ANSI_RESET "\n\n");
+        printf(ANSI_COLOR_GREEN
+        "🚀 Punteggio: %d"
+        ANSI_RESET
+        "\n\n", board->score);
+        if (gameSaved) {
+            printf(ANSI_COLOR_GREEN
+            "✅ Partita salvata con successo"
+            ANSI_RESET
+            "\n\n");
             gameSaved = false;
         }
+
+        if (strlen(error) > 0) {
+            printf(ANSI_COLOR_RED
+            "❌ %s"
+            ANSI_RESET
+            "\n\n", error);
+            strcpy(error, "");
+        }
+
         printBoard(board);
         printf("\U0001F449 Usa WASD o le freccie per muoverti\n"
                "\U0001F449 Q per uscire\n"
                "\U0001F449 R per ricominciare\n"
                "\U0001F449 F per salvare\n"
+               "\U0001F449 Z per ripristinare l'ultima mossa\n"
                "❔ Per visualizzare la leaderboard oppure per caricare una partita riavvia il programma\n");
 
 
@@ -78,13 +96,16 @@ void gameHandler(Board *board) {
         system("/bin/stty cooked"); // Riabilita il buffering dei tasti premuti
 
 
+
         if (c == 'f' || c == 'F') {
             saveGame(board);
             gameSaved = true;
-            if (debugMode)
-                printf("Partita salvata!\n");
+//            if (debugMode)
+//                printf("Partita salvata!\n");
         } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
-            printf(ANSI_BG_RED "\nHai scelto di uscire dal gioco\n" ANSI_RESET);
+            printf(ANSI_BG_RED
+            "\nHai scelto di uscire dal gioco\n"
+            ANSI_RESET);
             memoryFree(board);
             exit(1);
         } else if (c == 'r' || c == 'R') { // <-- Reimposto la tabella e rimetto i valori iniziali
@@ -93,12 +114,21 @@ void gameHandler(Board *board) {
             fillInitialValues(board);
             restart = true;
             system("clear");
-        } else if(c == 'z' || c == 'Z') {
-            system("clear");
-            printLeaderboard();
-        }
-        else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
+        } else if (c == 'z' || c == 'Z') {
+            // Ripristina l'ultima mossa
+            if (firstRound) {
+                strcpy(error, "Non hai ancora effettuato la prima mossa!");
+            } else {
+                for (int i = 0; i < board->dimX; i++) {
+                    for (int j = 0; j < board->dimY; j++) {
+                        board->board[i][j] = board->lastBoard[i][j];
+                    }
+                    firstRound = false;
+                }
+            }
+        } else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
             if (canMoveUp(board)) {
+                saveBoard(board);
                 moveUp(board);
                 validMove = true;
             } else {
@@ -106,6 +136,7 @@ void gameHandler(Board *board) {
             }
         } else if (c == 'a' || c == 'A') {  // <-- Muovo verso sinistra
             if (canMoveLeft(board)) {
+                saveBoard(board);
                 moveLeft(board);
                 validMove = true;
             } else {
@@ -113,6 +144,7 @@ void gameHandler(Board *board) {
             }
         } else if (c == 's' || c == 'S') {  // <-- Muovo verso il basso
             if (canMoveDown(board)) {
+                saveBoard(board);
                 moveDown(board);
                 validMove = true;
             } else {
@@ -120,6 +152,7 @@ void gameHandler(Board *board) {
             }
         } else if (c == 'd' || c == 'D') {  // <-- Muovo verso destra
             if (canMoveRight(board)) {
+                saveBoard(board);
                 moveRight(board);
                 validMove = true;
             } else {
@@ -142,6 +175,13 @@ void gameHandler(Board *board) {
     }
 }
 
+void saveBoard(Board *board) {
+    for (int i = 0; i < board->dimX; i++) {
+        for (int j = 0; j < board->dimY; j++) {
+            board->lastBoard[i][j] = board->board[i][j];
+        }
+    }
+}
 
 void initializeBoard(Board *board) {
     board->board = calloc(board->dimX, sizeof(int *));
@@ -150,15 +190,6 @@ void initializeBoard(Board *board) {
         for (int j = 0; j < board->dimY; j++) {
             board->board[i] = calloc(board->dimY, sizeof(int));
             board->board[i][j] = 0;
-        }
-    }
-
-    // initialize second board
-    board->lastBoard = calloc(board->dimX, sizeof(int *));
-    for (int i = 0; i < board->dimX; i++) {
-        for (int j = 0; j < board->dimY; j++) {
-            board->lastBoard[i] = calloc(board->dimY, sizeof(int));
-            board->lastBoard[i][j] = 0;
         }
     }
 }
@@ -191,6 +222,18 @@ void fillInitialValues(Board *board) {
         value = 4;
     }
     board->board[i2][j2] = value;
+
+
+
+
+    // Salvo anche la tabella secondaria
+    board->lastBoard = calloc(board->dimX, sizeof(int *));
+    for (int i = 0; i < board->dimX; i++) {
+        for (int j = 0; j < board->dimY; j++) {
+            board->lastBoard[i] = calloc(board->dimY, sizeof(int));
+            board->lastBoard[i][j] = board->board[i][j];
+        }
+    }
 }
 
 void printBoard(Board *board) {
@@ -205,19 +248,55 @@ void printBoard(Board *board) {
     for (int i = 0; i < board->dimX; i++) {
         for (int j = 0; j < board->dimY; j++) {
             if (board->board[i][j] == 0) printf("│    ");
-            else if (board->board[i][j] == 2) printf("│" ANSI_COLOR_CYAN " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 4) printf("│" ANSI_COLOR_BLUE " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 8) printf("│" ANSI_COLOR_YELLOW " %d  " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 16) printf("│" ANSI_COLOR_GREEN " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 32) printf("│" ANSI_COLOR_MAGENTA " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 64) printf("│" ANSI_COLOR_RED " %d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 128) printf("│" ANSI_COLOR_CYAN "%d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 256) printf("│" ANSI_COLOR_BLUE "%d " ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 512) printf("│" ANSI_COLOR_YELLOW " %d" ANSI_RESET, board->board[i][j]);
-            else if (board->board[i][j] == 1024) printf("│" ANSI_COLOR_GREEN "%d" ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 2) printf("│"
+            ANSI_COLOR_CYAN
+            " %d  "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 4) printf("│"
+            ANSI_COLOR_BLUE
+            " %d  "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 8) printf("│"
+            ANSI_COLOR_YELLOW
+            " %d  "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 16) printf("│"
+            ANSI_COLOR_GREEN
+            " %d "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 32) printf("│"
+            ANSI_COLOR_MAGENTA
+            " %d "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 64) printf("│"
+            ANSI_COLOR_RED
+            " %d "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 128) printf("│"
+            ANSI_COLOR_CYAN
+            "%d "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 256) printf("│"
+            ANSI_COLOR_BLUE
+            "%d "
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 512) printf("│"
+            ANSI_COLOR_YELLOW
+            " %d"
+            ANSI_RESET, board->board[i][j]);
+            else if (board->board[i][j] == 1024) printf("│"
+            ANSI_COLOR_GREEN
+            "%d"
+            ANSI_RESET, board->board[i][j]);
             else if (board->board[i][j] == 2048)
-                printf("│" ANSI_COLOR_MAGENTA "%d" ANSI_RESET, board->board[i][j]); // Il gioco finisce qui no?
-            else printf("│" ANSI_COLOR_RED "%d" ANSI_RESET, board->board[i][j]);
+                printf("│"
+            ANSI_COLOR_MAGENTA
+            "%d"
+            ANSI_RESET, board->board[i][j]); // Il gioco finisce qui no?
+            else printf("│"
+            ANSI_COLOR_RED
+            "%d"
+            ANSI_RESET, board->board[i][j]);
         }
         printf("│\n");
         if (i != board->dimX - 1) {
@@ -419,8 +498,6 @@ void addNewRandom(Board *board) {
 }
 
 
-
-
 void saveGame(Board *b) // Salva la partita in corso
 {
     FILE *fp;
@@ -504,7 +581,8 @@ void setGridDimension(Board *b) {   // Imposta la dimensione della griglia
         }
         dim = strtol(input, &endptr,
                      10); // Converte la stringa in un int, primo parametro la stringa, secondo il puntatore alla fine della stringa (punta a quello che c'e dopo il numero (qualcosa di non valido), quindi volendo si puo usare per verificare piu numeri in basi diverse in un solo input), terzo la base (10 = decimale)
-        if (!(endptr == input || *endptr != '\n')) // Se endptr punta alla fine della stringa (non c'e' altro dopo il numero) allora e' un numero valido
+        if (!(endptr == input || *endptr !=
+                                 '\n')) // Se endptr punta alla fine della stringa (non c'e' altro dopo il numero) allora e' un numero valido
             validInput = true; // Esco dal ciclo
     }
     b->dimX = dim;
@@ -513,44 +591,106 @@ void setGridDimension(Board *b) {   // Imposta la dimensione della griglia
 
 void printWelcomeMessage() {
     system("clear");
-    printf(ANSI_FONT_BOLD ANSI_COLOR_RED
-           "██████╗  ██████╗ ██╗  ██╗ █████╗     ██████╗ ██╗   ██╗     █████╗ ██╗  ██╗██████╗ ██╗  ████████╗\n"
-           "╚════██╗██╔═████╗██║  ██║██╔══██╗    ██╔══██╗╚██╗ ██╔╝    ██╔══██╗╚██╗██╔╝╚════██╗██║  ╚══██╔══╝\n"
-           " █████╔╝██║██╔██║███████║╚█████╔╝    ██████╔╝ ╚████╔╝     ███████║ ╚███╔╝  █████╔╝██║     ██║   \n"
-           "██╔═══╝ ████╔╝██║╚════██║██╔══██╗    ██╔══██╗  ╚██╔╝      ██╔══██║ ██╔██╗  ╚═══██╗██║     ██║   \n"
-           "███████╗╚██████╔╝     ██║╚█████╔╝    ██████╔╝   ██║       ██║  ██║██╔╝ ██╗██████╔╝███████╗██║   \n"
-           "╚══════╝ ╚═════╝      ╚═╝ ╚════╝     ╚═════╝    ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝   \n"
-           "                                                                                                \n" ANSI_RESET);
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Usa " ANSI_COLOR_GREEN " (W A S D)" ANSI_RESET " o le " ANSI_COLOR_GREEN "freccie " ANSI_RESET "per muovere le caselle\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Premi " ANSI_COLOR_GREEN "R" ANSI_RESET " per resettare il gioco\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Premi " ANSI_COLOR_GREEN "Q" ANSI_RESET " per uscire\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Puoi salvare il gioco premendo " ANSI_COLOR_GREEN "F" ANSI_RESET "\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Per caricare una partita salvata premi "  ANSI_COLOR_GREEN "C" ANSI_RESET " (deve essere presente un file con il nome 2048.dat nella directory del programma)\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Premi "  ANSI_COLOR_GREEN "L" ANSI_RESET " ora per visualizzare la leaderboard\n");
-    printf(ANSI_COLOR_YELLOW "➡️ " ANSI_RESET "Premi "  ANSI_COLOR_GREEN "S" ANSI_RESET " per cambiare le dimensioni della griglia\n");
-    printf("\n" ANSI_COLOR_RED "✅ " ANSI_RESET "Premi qualsiasi tasto per iniziare\n");
+    printf(ANSI_FONT_BOLD
+    ANSI_COLOR_RED
+    "██████╗  ██████╗ ██╗  ██╗ █████╗     ██████╗ ██╗   ██╗     █████╗ ██╗  ██╗██████╗ ██╗  ████████╗\n"
+    "╚════██╗██╔═████╗██║  ██║██╔══██╗    ██╔══██╗╚██╗ ██╔╝    ██╔══██╗╚██╗██╔╝╚════██╗██║  ╚══██╔══╝\n"
+    " █████╔╝██║██╔██║███████║╚█████╔╝    ██████╔╝ ╚████╔╝     ███████║ ╚███╔╝  █████╔╝██║     ██║   \n"
+    "██╔═══╝ ████╔╝██║╚════██║██╔══██╗    ██╔══██╗  ╚██╔╝      ██╔══██║ ██╔██╗  ╚═══██╗██║     ██║   \n"
+    "███████╗╚██████╔╝     ██║╚█████╔╝    ██████╔╝   ██║       ██║  ██║██╔╝ ██╗██████╔╝███████╗██║   \n"
+    "╚══════╝ ╚═════╝      ╚═╝ ╚════╝     ╚═════╝    ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝   \n"
+    "                                                                                                \n"
+    ANSI_RESET);
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Usa "
+    ANSI_COLOR_GREEN
+    " (W A S D)"
+    ANSI_RESET
+    " o le "
+    ANSI_COLOR_GREEN
+    "freccie "
+    ANSI_RESET
+    "per muovere le caselle\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Premi "
+    ANSI_COLOR_GREEN
+    "R"
+    ANSI_RESET
+    " per resettare il gioco\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Premi "
+    ANSI_COLOR_GREEN
+    "Q"
+    ANSI_RESET
+    " per uscire\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Puoi salvare il gioco premendo "
+    ANSI_COLOR_GREEN
+    "F"
+    ANSI_RESET
+    "\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Per caricare una partita salvata premi "
+    ANSI_COLOR_GREEN
+    "C"
+    ANSI_RESET
+    " (deve essere presente un file con il nome 2048.dat nella directory del programma)\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Premi "
+    ANSI_COLOR_GREEN
+    "L"
+    ANSI_RESET
+    " ora per visualizzare la leaderboard\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Premi "
+    ANSI_COLOR_GREEN
+    "S"
+    ANSI_RESET
+    " per cambiare le dimensioni della griglia\n");
+    printf("\n"
+    ANSI_COLOR_RED
+    "✅ "
+    ANSI_RESET
+    "Premi qualsiasi tasto per iniziare\n");
 }
 
 void printLoseMessage() {
-    printf(ANSI_COLOR_RED ""
-           "\n"
-           " ██░ ██  ▄▄▄       ██▓    ██▓███  ▓█████  ██▀███    ██████  ▒█████   ▐██▌ \n"
-           "▓██░ ██▒▒████▄    ▓██▒   ▓██░  ██▒▓█   ▀ ▓██ ▒ ██▒▒██    ▒ ▒██▒  ██▒ ▐██▌ \n"
-           "▒██▀▀██░▒██  ▀█▄  ▒██▒   ▓██░ ██▓▒▒███   ▓██ ░▄█ ▒░ ▓██▄   ▒██░  ██▒ ▐██▌ \n"
-           "░▓█ ░██ ░██▄▄▄▄██ ░██░   ▒██▄█▓▒ ▒▒▓█  ▄ ▒██▀▀█▄    ▒   ██▒▒██   ██░ ▓██▒ \n"
-           "░▓█▒░██▓ ▓█   ▓██▒░██░   ▒██▒ ░  ░░▒████▒░██▓ ▒██▒▒██████▒▒░ ████▓▒░ ▒▄▄  \n"
-           " ▒ ░░▒░▒ ▒▒   ▓▒█░░▓     ▒▓▒░ ░  ░░░ ▒░ ░░ ▒▓ ░▒▓░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░  ░▀▀▒ \n"
-           " ▒ ░▒░ ░  ▒   ▒▒ ░ ▒ ░   ░▒ ░      ░ ░  ░  ░▒ ░ ▒░░ ░▒  ░ ░  ░ ▒ ▒░  ░  ░ \n"
-           " ░  ░░ ░  ░   ▒    ▒ ░   ░░          ░     ░░   ░ ░  ░  ░  ░ ░ ░ ▒      ░ \n"
-           " ░  ░  ░      ░  ░ ░                 ░  ░   ░           ░      ░ ░   ░    \n"
-           "                                                                          "
-           ANSI_RESET);
+    printf(ANSI_COLOR_RED
+    ""
+    "\n"
+    " ██░ ██  ▄▄▄       ██▓    ██▓███  ▓█████  ██▀███    ██████  ▒█████   ▐██▌ \n"
+    "▓██░ ██▒▒████▄    ▓██▒   ▓██░  ██▒▓█   ▀ ▓██ ▒ ██▒▒██    ▒ ▒██▒  ██▒ ▐██▌ \n"
+    "▒██▀▀██░▒██  ▀█▄  ▒██▒   ▓██░ ██▓▒▒███   ▓██ ░▄█ ▒░ ▓██▄   ▒██░  ██▒ ▐██▌ \n"
+    "░▓█ ░██ ░██▄▄▄▄██ ░██░   ▒██▄█▓▒ ▒▒▓█  ▄ ▒██▀▀█▄    ▒   ██▒▒██   ██░ ▓██▒ \n"
+    "░▓█▒░██▓ ▓█   ▓██▒░██░   ▒██▒ ░  ░░▒████▒░██▓ ▒██▒▒██████▒▒░ ████▓▒░ ▒▄▄  \n"
+    " ▒ ░░▒░▒ ▒▒   ▓▒█░░▓     ▒▓▒░ ░  ░░░ ▒░ ░░ ▒▓ ░▒▓░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░  ░▀▀▒ \n"
+    " ▒ ░▒░ ░  ▒   ▒▒ ░ ▒ ░   ░▒ ░      ░ ░  ░  ░▒ ░ ▒░░ ░▒  ░ ░  ░ ▒ ▒░  ░  ░ \n"
+    " ░  ░░ ░  ░   ▒    ▒ ░   ░░          ░     ░░   ░ ░  ░  ░  ░ ░ ░ ▒      ░ \n"
+    " ░  ░  ░      ░  ░ ░                 ░  ░   ░           ░      ░ ░   ░    \n"
+    "                                                                          "
+    ANSI_RESET);
 }
 
 
 void loseHandler(Board *board) {
     printLoseMessage();
-    printf(ANSI_COLOR_RED "\nIl tuo punteggio finale è di: %d\n\n" ANSI_RESET, board->score);
+    printf(ANSI_COLOR_RED
+    "\nIl tuo punteggio finale è di: %d\n\n"
+    ANSI_RESET, board->score);
     // prompt to save the score
     printf("Vuoi salvare il tuo punteggio? (S/n): ");
     char save;

@@ -50,6 +50,8 @@ void printLoseMessage();
 
 void gameHandler(Board *board);
 
+void saveBoard(Board *board);
+
 void loseHandler(Board *board);
 
 void memoryFree(Board *board);

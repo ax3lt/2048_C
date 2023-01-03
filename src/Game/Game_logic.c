@@ -1,6 +1,7 @@
 #include "../Database/DB_logic.c"
 #include "Game_logic.h"
 
+
 void gameHandler(Board *board) {
     initializeDB();
     printWelcomeMessage();
@@ -31,33 +32,26 @@ void gameHandler(Board *board) {
     fflush(stdin); // Cancello enter dal buffer
     system("clear");
 
-    bool gameSaved = false;
     bool firstRound = true;
-    char error[100];
-    while (1) {
-        // save current board
+    Vector messageBuffer;
+    vector_init(&messageBuffer);
 
+
+    while (1) {
         bool validMove = false;  // Controllo se possibile fare un movimento valido
         bool restart = false;   // Controllo se è stato premuto R
         printf(ANSI_COLOR_GREEN
         "🚀 Punteggio: %d"
         ANSI_RESET
         "\n\n", board->score);
-        if (gameSaved) {
-            printf(ANSI_COLOR_GREEN
-            "✅ Partita salvata con successo"
-            ANSI_RESET
-            "\n\n");
-            gameSaved = false;
+
+        if (vector_size(&messageBuffer) > 0) {  // Stampo i messaggi delle funzioni se presenti
+            for (int i = 0; i < vector_size(&messageBuffer); i++) {
+                printf("%s\n", (char *) vector_get(&messageBuffer, i));
+            }
+            vector_reset(&messageBuffer);
         }
 
-        if (strlen(error) > 0) {
-            printf(ANSI_COLOR_RED
-            "❌ %s"
-            ANSI_RESET
-            "\n\n", error);
-            strcpy(error, "");
-        }
 
         printBoard(board);
         printf("\U0001F449 Usa WASD o le freccie per muoverti\n"
@@ -99,9 +93,9 @@ void gameHandler(Board *board) {
 
         if (c == 'f' || c == 'F') {
             saveGame(board);
-            gameSaved = true;
-//            if (debugMode)
-//                printf("Partita salvata!\n");
+            vector_push(&messageBuffer, ANSI_COLOR_GREEN
+            "✅ Partita salvata con successo"
+            ANSI_RESET);
         } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
             printf(ANSI_BG_RED
             "\nHai scelto di uscire dal gioco\n"
@@ -117,7 +111,10 @@ void gameHandler(Board *board) {
         } else if (c == 'z' || c == 'Z') {
             // Ripristina l'ultima mossa
             if (firstRound) {
-                strcpy(error, "Non hai ancora effettuato la prima mossa!");
+                vector_push(&messageBuffer, ANSI_COLOR_RED
+                "❌ Non hai ancora fatto la prima mossa!"
+                ANSI_RESET
+                "");
             } else {
                 for (int i = 0; i < board->dimX; i++) {
                     for (int j = 0; j < board->dimY; j++) {
@@ -164,6 +161,7 @@ void gameHandler(Board *board) {
         if (!restart &&
             validMove) {    // <-- Se non è stato premuto R e se è stato premuto un tasto valido posso aggiungere un nuovo valore
             addNewRandom(board);
+            firstRound = false;
         }
         system("clear");
         if (!canMove(board)) {  // <-- Se non è possibile muovere nessuna casella il gioco è finito

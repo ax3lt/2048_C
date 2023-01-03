@@ -620,7 +620,7 @@ SQLITE_API int sqlite3_exec(
 ** CAPI3REF: Device Characteristics
 **
 ** The xDeviceCharacteristics method of the [sqlite3_io_methods]
-** object returns an integer which is a vector of these
+** object returns an integer which is a Vector of these
 ** bit values expressing I/O characteristics of the mass storage
 ** device that holds the file that the [sqlite3_io_methods]
 ** refers to.
@@ -791,7 +791,7 @@ struct sqlite3_file {
 ** device that underlies the file.  The sector size is the
 ** minimum write that can be performed without disturbing
 ** other bytes in the file.  The xDeviceCharacteristics()
-** method returns a bit vector describing behaviors of the
+** method returns a bit Vector describing behaviors of the
 ** underlying device:
 **
 ** <ul>
@@ -11264,7 +11264,7 @@ SQLITE_API int sqlite3changeset_pk(
 ** [SQLITE_RANGE] is returned and *ppValue is set to NULL.
 **
 ** If successful, this function sets *ppValue to point to a protected
-** sqlite3_value object containing the iVal'th value from the vector of
+** sqlite3_value object containing the iVal'th value from the Vector of
 ** original row values stored as part of the UPDATE or DELETE change and
 ** returns SQLITE_OK. The name of the function comes from the fact that this
 ** is similar to the "old.*" columns available to update or delete triggers.
@@ -11295,7 +11295,7 @@ SQLITE_API int sqlite3changeset_old(
 ** [SQLITE_RANGE] is returned and *ppValue is set to NULL.
 **
 ** If successful, this function sets *ppValue to point to a protected
-** sqlite3_value object containing the iVal'th value from the vector of
+** sqlite3_value object containing the iVal'th value from the Vector of
 ** new row values stored as part of the UPDATE or INSERT change and
 ** returns SQLITE_OK. If the change is an UPDATE and does not include
 ** a new value for the requested column, *ppValue is set to NULL and

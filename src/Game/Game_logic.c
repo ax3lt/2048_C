@@ -107,59 +107,52 @@ void gameHandler(Board *board) {
             system("clear");
         } else if (c == 'z' || c == 'Z') {
             // Ripristina l'ultima mossa
-            if (firstRound) {
+            if (board->round < 1) {
                 vector_push(&messageBuffer, ANSI_COLOR_RED
                 "❌ Non hai ancora fatto la prima mossa!"
                 ANSI_RESET
                 "");
             } else {
-                board->score = atoi(current_score);
+                // Check if the current board is the same as the previous one
+                bool sameBoard = true;
                 for (int i = 0; i < board->dimX; i++) {
                     for (int j = 0; j < board->dimY; j++) {
-                        board->board[i][j] = board->lastBoard[i][j];
+                        if (board->board[i][j] != board->lastBoard[i][j]) {
+                            sameBoard = false;
+                            break;
+                        }
                     }
-                    firstRound = false;
+                }
+                if (sameBoard) {
+                    vector_push(&messageBuffer, ANSI_COLOR_RED
+                    "❌ Non puoi ripristinare l'ultima mossa!"
+                    ANSI_RESET
+                    "");
+                } else {
+                    // Restore the previous board
+                    for (int i = 0; i < board->dimX; i++) {
+                        for (int j = 0; j < board->dimY; j++) {
+                            board->board[i][j] = board->lastBoard[i][j];
+                        }
+                    }
+                    board->score = atoi(current_score);
+                    board->round--;
+//                    vector_push(&messageBuffer, ANSI_COLOR_GREEN
+//                    "✅ Ultima mossa ripristinata!"        // Fastidioso?
+//                    ANSI_RESET
+//                    "");
                 }
             }
-        } else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
-            if (canMoveUp(board)) {
-                saveBoard(board);
-                sprintf(current_score, "%d",
-                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
-                moveUp(board);
-                validMove = true;
-            } else {
-                validMove = false;
-            }
-        } else if (c == 'a' || c == 'A') {  // <-- Muovo verso sinistra
-            if (canMoveLeft(board)) {
-                saveBoard(board);
-                sprintf(current_score, "%d",
-                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
-                moveLeft(board);
-                validMove = true;
-            } else {
-                validMove = false;
-            }
-        } else if (c == 's' || c == 'S') {  // <-- Muovo verso il basso
-            if (canMoveDown(board)) {
-                saveBoard(board);
-                sprintf(current_score, "%d",
-                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
-                moveDown(board);
-                validMove = true;
-            } else {
-                validMove = false;
-            }
-        } else if (c == 'd' || c == 'D') {  // <-- Muovo verso destra
-            if (canMoveRight(board)) {
-                saveBoard(board);
-                sprintf(current_score, "%d",
-                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
-                moveRight(board);
-                validMove = true;
-            } else {
-                validMove = false;
+        } else if (c == 'w' || c == 'W' || c == 'a' || c == 'A' || c == 's' || c == 'S' || c == 'd' || c == 'D') {
+            // Eseguo la mossa
+            sprintf(current_score, "%d",
+                    board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
+            validMove = handleMove(board, c);
+            if (!validMove) {
+                vector_push(&messageBuffer, ANSI_COLOR_RED
+                "❌ Mossa non valida"
+                ANSI_RESET
+                "");
             }
         }
 
@@ -167,7 +160,7 @@ void gameHandler(Board *board) {
         if (!restart &&
             validMove) {    // <-- Se non è stato premuto R e se è stato premuto un tasto valido posso aggiungere un nuovo valore
             addNewRandom(board);
-            firstRound = false;
+            board->round++;
         }
         system("clear");
         if (!canMove(board)) {  // <-- Se non è possibile muovere nessuna casella il gioco è finito
@@ -176,7 +169,39 @@ void gameHandler(Board *board) {
 
         if (debugMode)
             printf("Movimento possibile: %s\n", canMove(board) ? "Si" : "No");
+        // Print current round
+        printf("Round: %d\n", board->round);
     }
+}
+
+bool handleMove(Board *board, char move) {
+    bool validMove = false;
+    if (move == 'w' || move == 'W') {  // <-- Muovo verso l'alto
+        if (canMoveUp(board)) {
+            saveBoard(board);
+            moveUp(board);
+            validMove = true;
+        }
+    } else if (move == 'a' || move == 'A') {  // <-- Muovo verso sinistra
+        if (canMoveLeft(board)) {
+            saveBoard(board);
+            moveLeft(board);
+            validMove = true;
+        }
+    } else if (move == 's' || move == 'S') {  // <-- Muovo verso il basso
+        if (canMoveDown(board)) {
+            saveBoard(board);
+            moveDown(board);
+            validMove = true;
+        }
+    } else if (move == 'd' || move == 'D') {  // <-- Muovo verso destra
+        if (canMoveRight(board)) {
+            saveBoard(board);
+            moveRight(board);
+            validMove = true;
+        }
+    }
+    return validMove;
 }
 
 void saveBoard(Board *board) {
@@ -190,6 +215,7 @@ void saveBoard(Board *board) {
 void initializeBoard(Board *board) {
     board->board = calloc(board->dimX, sizeof(int *));
     board->score = 0;
+    board->round = 0;
     for (int i = 0; i < board->dimX; i++) {
         for (int j = 0; j < board->dimY; j++) {
             board->board[i] = calloc(board->dimY, sizeof(int));

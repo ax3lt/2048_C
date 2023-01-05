@@ -13,6 +13,7 @@ typedef struct {
     int dimX;
     int dimY;
     int score;
+    int round;
 } Board;
 
 void initializeBoard(Board *board);
@@ -32,6 +33,8 @@ bool canMoveRight(Board *board);
 bool canMoveUp(Board *board);
 
 bool canMoveDown(Board *board);
+
+bool handleMove(Board *board, char move);
 
 void moveUp(Board *board);
 

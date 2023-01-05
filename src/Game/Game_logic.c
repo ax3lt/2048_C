@@ -1,4 +1,3 @@
-#include "../Database/DB_logic.c"
 #include "Game_logic.h"
 
 
@@ -36,7 +35,7 @@ void gameHandler(Board *board) {
     Vector messageBuffer;
     vector_init(&messageBuffer);
 
-
+    char current_score[20];
     while (1) {
         bool validMove = false;  // Controllo se possibile fare un movimento valido
         bool restart = false;   // Controllo se è stato premuto R
@@ -89,8 +88,6 @@ void gameHandler(Board *board) {
         system("/bin/stty echo");   // Riabilita l'echo dei tasti premuti
         system("/bin/stty cooked"); // Riabilita il buffering dei tasti premuti
 
-
-
         if (c == 'f' || c == 'F') {
             saveGame(board);
             vector_push(&messageBuffer, ANSI_COLOR_GREEN
@@ -116,6 +113,7 @@ void gameHandler(Board *board) {
                 ANSI_RESET
                 "");
             } else {
+                board->score = atoi(current_score);
                 for (int i = 0; i < board->dimX; i++) {
                     for (int j = 0; j < board->dimY; j++) {
                         board->board[i][j] = board->lastBoard[i][j];
@@ -126,6 +124,8 @@ void gameHandler(Board *board) {
         } else if (c == 'w' || c == 'W') {  // <-- Muovo verso l'alto
             if (canMoveUp(board)) {
                 saveBoard(board);
+                sprintf(current_score, "%d",
+                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
                 moveUp(board);
                 validMove = true;
             } else {
@@ -134,6 +134,8 @@ void gameHandler(Board *board) {
         } else if (c == 'a' || c == 'A') {  // <-- Muovo verso sinistra
             if (canMoveLeft(board)) {
                 saveBoard(board);
+                sprintf(current_score, "%d",
+                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
                 moveLeft(board);
                 validMove = true;
             } else {
@@ -142,6 +144,8 @@ void gameHandler(Board *board) {
         } else if (c == 's' || c == 'S') {  // <-- Muovo verso il basso
             if (canMoveDown(board)) {
                 saveBoard(board);
+                sprintf(current_score, "%d",
+                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
                 moveDown(board);
                 validMove = true;
             } else {
@@ -150,6 +154,8 @@ void gameHandler(Board *board) {
         } else if (c == 'd' || c == 'D') {  // <-- Muovo verso destra
             if (canMoveRight(board)) {
                 saveBoard(board);
+                sprintf(current_score, "%d",
+                        board->score);  // Converto il punteggio in stringa per poterlo ripristinare se serve
                 moveRight(board);
                 validMove = true;
             } else {
@@ -633,6 +639,14 @@ void printWelcomeMessage() {
     "Puoi salvare il gioco premendo "
     ANSI_COLOR_GREEN
     "F"
+    ANSI_RESET
+    "\n");
+    printf(ANSI_COLOR_YELLOW
+    "➡️ "
+    ANSI_RESET
+    "Puoi ripristinare l'ultima mossa con "
+    ANSI_COLOR_GREEN
+    "Z"
     ANSI_RESET
     "\n");
     printf(ANSI_COLOR_YELLOW

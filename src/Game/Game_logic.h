@@ -3,6 +3,9 @@
 
 #endif //INC_2048_MAC_GAME_LOGIC_H
 
+#include "../libs/Vector.h"
+#include "../Database/DB_logic.c"
+
 typedef struct {
 //    int board[4][4];
     int **board;

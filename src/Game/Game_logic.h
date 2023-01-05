@@ -36,6 +36,8 @@ bool canMoveDown(Board *board);
 
 bool handleMove(Board *board, char move);
 
+void handleRollback(Board *board, Vector *messageBuffer, int current_score);
+
 void moveUp(Board *board);
 
 void moveDown(Board *board);

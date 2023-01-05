@@ -40,9 +40,10 @@ void gameHandler(Board *board) {
         bool validMove = false;  // Controllo se possibile fare un movimento valido
         bool restart = false;   // Controllo se è stato premuto R
         printf(ANSI_COLOR_GREEN
-        "🚀 Punteggio: %d"
+        "🚀 Punteggio: %d\n"
+        "ℹ️  Round: %d"
         ANSI_RESET
-        "\n\n", board->score);
+        "\n\n", board->score, board->round);
 
         if (vector_size(&messageBuffer) > 0) {  // Stampo i messaggi delle funzioni se presenti
             for (int i = 0; i < vector_size(&messageBuffer); i++) {
@@ -91,7 +92,7 @@ void gameHandler(Board *board) {
         if (c == 'f' || c == 'F') {
             saveGame(board);
             vector_push(&messageBuffer, ANSI_COLOR_GREEN
-            "✅ Partita salvata con successo"
+            "✅ Partita salvata con successo\n"
             ANSI_RESET);
         } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
             printf(ANSI_BG_RED
@@ -106,43 +107,8 @@ void gameHandler(Board *board) {
             restart = true;
             system("clear");
         } else if (c == 'z' || c == 'Z') {
-            // Ripristina l'ultima mossa
-            if (board->round < 1) {
-                vector_push(&messageBuffer, ANSI_COLOR_RED
-                "❌ Non hai ancora fatto la prima mossa!"
-                ANSI_RESET
-                "");
-            } else {
-                // Check if the current board is the same as the previous one
-                bool sameBoard = true;
-                for (int i = 0; i < board->dimX; i++) {
-                    for (int j = 0; j < board->dimY; j++) {
-                        if (board->board[i][j] != board->lastBoard[i][j]) {
-                            sameBoard = false;
-                            break;
-                        }
-                    }
-                }
-                if (sameBoard) {
-                    vector_push(&messageBuffer, ANSI_COLOR_RED
-                    "❌ Non puoi ripristinare l'ultima mossa!"
-                    ANSI_RESET
-                    "");
-                } else {
-                    // Restore the previous board
-                    for (int i = 0; i < board->dimX; i++) {
-                        for (int j = 0; j < board->dimY; j++) {
-                            board->board[i][j] = board->lastBoard[i][j];
-                        }
-                    }
-                    board->score = atoi(current_score);
-                    board->round--;
-//                    vector_push(&messageBuffer, ANSI_COLOR_GREEN
-//                    "✅ Ultima mossa ripristinata!"        // Fastidioso?
-//                    ANSI_RESET
-//                    "");
-                }
-            }
+            int tmpScr = atoi(current_score);
+            handleRollback(board, &messageBuffer, tmpScr);
         } else if (c == 'w' || c == 'W' || c == 'a' || c == 'A' || c == 's' || c == 'S' || c == 'd' || c == 'D') {
             // Eseguo la mossa
             sprintf(current_score, "%d",
@@ -150,7 +116,7 @@ void gameHandler(Board *board) {
             validMove = handleMove(board, c);
             if (!validMove) {
                 vector_push(&messageBuffer, ANSI_COLOR_RED
-                "❌ Mossa non valida"
+                "❌ Mossa non valida\n"
                 ANSI_RESET
                 "");
             }
@@ -170,8 +136,48 @@ void gameHandler(Board *board) {
         if (debugMode)
             printf("Movimento possibile: %s\n", canMove(board) ? "Si" : "No");
         // Print current round
-        printf("Round: %d\n", board->round);
     }
+}
+
+void handleRollback(Board *board, Vector *messageBuffer, int current_score) {
+    // Ripristina l'ultima mossa
+    if (board->round < 1) {
+        vector_push(messageBuffer, ANSI_COLOR_RED
+        "❌ Non hai ancora fatto la prima mossa!\n"
+        ANSI_RESET
+        "");
+    } else {
+        // Check if the current board is the same as the previous one
+        bool sameBoard = true;
+        for (int i = 0; i < board->dimX; i++) {
+            for (int j = 0; j < board->dimY; j++) {
+                if (board->board[i][j] != board->lastBoard[i][j]) {
+                    sameBoard = false;
+                    break;
+                }
+            }
+        }
+        if (sameBoard) {
+            vector_push(messageBuffer, ANSI_COLOR_RED
+            "❌ Non puoi ripristinare l'ultima mossa!\n"
+            ANSI_RESET
+            "");
+        } else {
+            // Restore the previous board
+            for (int i = 0; i < board->dimX; i++) {
+                for (int j = 0; j < board->dimY; j++) {
+                    board->board[i][j] = board->lastBoard[i][j];
+                }
+            }
+            board->score = current_score;
+            board->round--;
+                    vector_push(messageBuffer, ANSI_COLOR_GREEN
+                    "✅ Ultima mossa ripristinata!\n"        // Fastidioso?
+                    ANSI_RESET
+                    "");
+        }
+    }
+
 }
 
 bool handleMove(Board *board, char move) {

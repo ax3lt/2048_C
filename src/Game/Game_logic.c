@@ -41,7 +41,7 @@ void gameHandler(Board *board) {
         bool restart = false;   // Controllo se è stato premuto R
         printf(ANSI_COLOR_GREEN
         "🚀 Punteggio: %d\n"
-        "ℹ️  Round: %d"
+        "ℹ️ Round: %d"
         ANSI_RESET
         "\n\n", board->score, board->round);
 

@@ -6,7 +6,7 @@ void gameHandler(Board *board) {
     printWelcomeMessage();
     board->dimX = 4; // Valori di default
     board->dimY = 4;
-<<<<<<< HEAD
+
     char cmd;
     system("stty raw");
     system("stty -echo");
@@ -17,7 +17,7 @@ void gameHandler(Board *board) {
         setGridDimension(board);
     }
     if (cmd == 'L' || cmd == 'l') {
-=======
+
     char tmp;
     system("stty raw");
     system("stty -echo");
@@ -29,17 +29,17 @@ void gameHandler(Board *board) {
         setGridDimension(board);
     }
     if (tmp == 'L' || tmp == 'l') {
->>>>>>> origin/master
+
         system("clear");
         printLeaderboard();
         exit(0);
     }
 
-<<<<<<< HEAD
+
     if (cmd == 'C' || cmd == 'c') {
-=======
+
     if (tmp == 'C' || tmp == 'c') {
->>>>>>> origin/master
+
         loadGame("2048.dat", board); // carica la partita salvata
     } else {
         initializeBoard(board);
@@ -48,10 +48,10 @@ void gameHandler(Board *board) {
     fflush(stdin); // Cancello enter dal buffer
     system("clear");
 
-<<<<<<< HEAD
-=======
+
+
     bool firstRound = true;
->>>>>>> origin/master
+
     Vector messageBuffer;
     vector_init(&messageBuffer);
 
@@ -60,7 +60,7 @@ void gameHandler(Board *board) {
         bool validMove = false;  // Controllo se possibile fare un movimento valido
         bool restart = false;   // Controllo se è stato premuto R
         printf(ANSI_COLOR_GREEN
-<<<<<<< HEAD
+
                "🚀 Punteggio: %d\n"
                "ℹ️ Round: %d"
                ANSI_RESET
@@ -71,25 +71,25 @@ void gameHandler(Board *board) {
 
         if (vector_size(&messageBuffer) > 0) {  // Stampo i messaggi delle funzioni se presenti
             printf("\n");
-=======
+
         "🚀 Punteggio: %d\n"
         "ℹ️  Round: %d"
         ANSI_RESET
         "\n\n", board->score, board->round);
 
         if (vector_size(&messageBuffer) > 0) {  // Stampo i messaggi delle funzioni se presenti
->>>>>>> origin/master
+
             for (int i = 0; i < vector_size(&messageBuffer); i++) {
                 printf("%s\n", (char *) vector_get(&messageBuffer, i));
             }
             vector_reset(&messageBuffer);
         }
 
-<<<<<<< HEAD
-=======
+
+
 
         printBoard(board);
->>>>>>> origin/master
+
         printf("\U0001F449 Usa WASD o le freccie per muoverti\n"
                "\U0001F449 Q per uscire\n"
                "\U0001F449 R per ricominciare\n"
@@ -128,21 +128,21 @@ void gameHandler(Board *board) {
         if (c == 'f' || c == 'F') {
             saveGame(board);
             vector_push(&messageBuffer, ANSI_COLOR_GREEN
-<<<<<<< HEAD
+
                                         "✅ Partita salvata con successo\n"
                                         ANSI_RESET);
         } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
             printf(ANSI_BG_RED
                    "\nHai scelto di uscire dal gioco\n"
                    ANSI_RESET);
-=======
+
             "✅ Partita salvata con successo\n"
             ANSI_RESET);
         } else if (c == 'q' || c == 'Q') { // <-- Terminazione del gioco
             printf(ANSI_BG_RED
             "\nHai scelto di uscire dal gioco\n"
             ANSI_RESET);
->>>>>>> origin/master
+
             memoryFree(board);
             exit(1);
         } else if (c == 'r' || c == 'R') { // <-- Reimposto la tabella e rimetto i valori iniziali
@@ -161,14 +161,14 @@ void gameHandler(Board *board) {
             validMove = handleMove(board, c);
             if (!validMove) {
                 vector_push(&messageBuffer, ANSI_COLOR_RED
-<<<<<<< HEAD
+
                                             "❌ Mossa non valida\n"
                                             ANSI_RESET
                                             "");
             }
         }
 
-=======
+
                 "❌ Mossa non valida\n"
                 ANSI_RESET
                 "");
@@ -176,18 +176,18 @@ void gameHandler(Board *board) {
         }
 
 
->>>>>>> origin/master
+
         if (!restart &&
             validMove) {    // <-- Se non è stato premuto R e se è stato premuto un tasto valido posso aggiungere un nuovo valore
             addNewRandom(board);
             board->round++;
         }
         system("clear");
-<<<<<<< HEAD
 
 
-=======
->>>>>>> origin/master
+
+
+
         if (!canMove(board)) {  // <-- Se non è possibile muovere nessuna casella il gioco è finito
             loseHandler(board);
         }
@@ -202,15 +202,15 @@ void handleRollback(Board *board, Vector *messageBuffer, int current_score) {
     // Ripristina l'ultima mossa
     if (board->round < 1) {
         vector_push(messageBuffer, ANSI_COLOR_RED
-<<<<<<< HEAD
+
                                    "❌ Non hai ancora fatto la prima mossa!\n"
                                    ANSI_RESET
                                    "");
-=======
+
         "❌ Non hai ancora fatto la prima mossa!\n"
         ANSI_RESET
         "");
->>>>>>> origin/master
+
     } else {
         // Check if the current board is the same as the previous one
         bool sameBoard = true;
@@ -224,15 +224,15 @@ void handleRollback(Board *board, Vector *messageBuffer, int current_score) {
         }
         if (sameBoard) {
             vector_push(messageBuffer, ANSI_COLOR_RED
-<<<<<<< HEAD
+
                                        "❌ Hai già ripristinato l'ultima mossa!\n"
                                        ANSI_RESET
                                        "");
-=======
+
             "❌ Non puoi ripristinare l'ultima mossa!\n"
             ANSI_RESET
             "");
->>>>>>> origin/master
+
         } else {
             // Restore the previous board
             for (int i = 0; i < board->dimX; i++) {
@@ -242,17 +242,17 @@ void handleRollback(Board *board, Vector *messageBuffer, int current_score) {
             }
             board->score = current_score;
             board->round--;
-<<<<<<< HEAD
+
             vector_push(messageBuffer, ANSI_COLOR_GREEN
                                        "✅ Ultima mossa ripristinata!\n"        // Fastidioso?
                                        ANSI_RESET
                                        "");
-=======
+
                     vector_push(messageBuffer, ANSI_COLOR_GREEN
                     "✅ Ultima mossa ripristinata!\n"        // Fastidioso?
                     ANSI_RESET
                     "");
->>>>>>> origin/master
+
         }
     }
 
@@ -362,7 +362,7 @@ void printBoard(Board *board) {
     for (int i = 0; i < board->dimX; i++) {
         for (int j = 0; j < board->dimY; j++) {
             if (board->board[i][j] == 0) printf("│    ");
-<<<<<<< HEAD
+
             else if (board->board[i][j] == 2)
                 printf("│"
                        ANSI_COLOR_CYAN
@@ -423,7 +423,7 @@ void printBoard(Board *board) {
                        ANSI_COLOR_RED
                        "%d"
                        ANSI_RESET, board->board[i][j]);
-=======
+
             else if (board->board[i][j] == 2) printf("│"
             ANSI_COLOR_CYAN
             " %d  "
@@ -473,7 +473,7 @@ void printBoard(Board *board) {
             ANSI_COLOR_RED
             "%d"
             ANSI_RESET, board->board[i][j]);
->>>>>>> origin/master
+
         }
         printf("│\n");
         if (i != board->dimX - 1) {
@@ -778,7 +778,7 @@ void setGridDimension(Board *b) {   // Imposta la dimensione della griglia
 void printWelcomeMessage() {
     system("clear");
     printf(ANSI_FONT_BOLD
-<<<<<<< HEAD
+
            ANSI_COLOR_RED
            "██████╗  ██████╗ ██╗  ██╗ █████╗     ██████╗ ██╗   ██╗     █████╗ ██╗  ██╗██████╗ ██╗  ████████╗\n"
            "╚════██╗██╔═████╗██║  ██║██╔══██╗    ██╔══██╗╚██╗ ██╔╝    ██╔══██╗╚██╗██╔╝╚════██╗██║  ╚══██╔══╝\n"
@@ -861,7 +861,7 @@ void printWelcomeMessage() {
            "✅ "
            ANSI_RESET
            "Premi qualsiasi tasto per iniziare\n");
-=======
+
     ANSI_COLOR_RED
     "██████╗  ██████╗ ██╗  ██╗ █████╗     ██████╗ ██╗   ██╗     █████╗ ██╗  ██╗██████╗ ██╗  ████████╗\n"
     "╚════██╗██╔═████╗██║  ██║██╔══██╗    ██╔══██╗╚██╗ ██╔╝    ██╔══██╗╚██╗██╔╝╚════██╗██║  ╚══██╔══╝\n"
@@ -944,12 +944,12 @@ void printWelcomeMessage() {
     "✅ "
     ANSI_RESET
     "Premi qualsiasi tasto per iniziare\n");
->>>>>>> origin/master
+
 }
 
 void printLoseMessage() {
     printf(ANSI_COLOR_RED
-<<<<<<< HEAD
+
            ""
            "\n"
            " ██░ ██  ▄▄▄       ██▓    ██▓███  ▓█████  ██▀███    ██████  ▒█████   ▐██▌ \n"
@@ -963,7 +963,7 @@ void printLoseMessage() {
            " ░  ░  ░      ░  ░ ░                 ░  ░   ░           ░      ░ ░   ░    \n"
            "                                                                          "
            ANSI_RESET);
-=======
+
     ""
     "\n"
     " ██░ ██  ▄▄▄       ██▓    ██▓███  ▓█████  ██▀███    ██████  ▒█████   ▐██▌ \n"
@@ -977,20 +977,20 @@ void printLoseMessage() {
     " ░  ░  ░      ░  ░ ░                 ░  ░   ░           ░      ░ ░   ░    \n"
     "                                                                          "
     ANSI_RESET);
->>>>>>> origin/master
+
 }
 
 
 void loseHandler(Board *board) {
     printLoseMessage();
     printf(ANSI_COLOR_RED
-<<<<<<< HEAD
+
            "\nIl tuo punteggio finale è di: %d\n\n"
            ANSI_RESET, board->score);
-=======
+
     "\nIl tuo punteggio finale è di: %d\n\n"
     ANSI_RESET, board->score);
->>>>>>> origin/master
+
     // prompt to save the score
     printf("Vuoi salvare il tuo punteggio? (S/n): ");
     char save;

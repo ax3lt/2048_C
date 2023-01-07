@@ -741,6 +741,15 @@ void loadGame(char *filename, Board *b) {    // Carica una partita salvata (dal 
         printf("File di salvataggio del gioco non valido.\n");
         exit(120);
     }
+
+    // Salvo anche la tabella secondaria
+    b->lastBoard = calloc(b->dimX, sizeof(int *));
+    for (int i = 0; i < b->dimX; i++) {
+        for (int j = 0; j < b->dimY; j++) {
+            b->lastBoard[i] = calloc(b->dimY, sizeof(int));
+            b->lastBoard[i][j] = b->board[i][j];
+        }
+    }
 }
 
 void setGridDimension(Board *b) {   // Imposta la dimensione della griglia

@@ -13,10 +13,11 @@ void gameHandler(Board *board) {
     //scanf("%c", &cmd);
     system("stty cooked");
     system("stty echo");
-    if (cmd == 's' || cmd == 'S') {
+
+    if (cmd == 'q' || cmd == 'Q') { exit(0); }
+    else if (cmd == 's' || cmd == 'S') {
         setGridDimension(board);
-    }
-    if (cmd == 'L' || cmd == 'l') {
+    } else if (cmd == 'L' || cmd == 'l') {
         system("clear");
         printLeaderboard();
         exit(0);
@@ -171,10 +172,10 @@ void handleRollback(Board *board, Vector *messageBuffer, int current_score) {
             }
             board->score = current_score;
             board->round--;
-                    vector_push(messageBuffer, ANSI_COLOR_GREEN
-                    "✅ Ultima mossa ripristinata!\n"        // Fastidioso?
-                    ANSI_RESET
-                    "");
+            vector_push(messageBuffer, ANSI_COLOR_GREEN
+            "✅ Ultima mossa ripristinata!\n"        // Fastidioso?
+            ANSI_RESET
+            "");
         }
     }
 
@@ -587,7 +588,7 @@ void loadGame(char *filename, Board *b) {    // Carica una partita salvata (dal 
                 atoi(line) != 32 &&
                 atoi(line) != 64 && atoi(line) != 128 && atoi(line) != 256 && atoi(line) != 512 && atoi(line) != 1024 &&
                 atoi(line) != 2048) {
-                printf("File di salvataggio del gioco non valido.%d\n", atoi(line));
+                printf("File di salvataggio del gioco non valido. (%d)\n", atoi(line));
                 exit(110);
             }
 
@@ -601,7 +602,7 @@ void loadGame(char *filename, Board *b) {    // Carica una partita salvata (dal 
         exit(120);
     }
 
-        // Salvo anche la tabella secondaria
+    // Salvo anche la tabella secondaria
     b->lastBoard = calloc(b->dimX, sizeof(int *));
     for (int i = 0; i < b->dimX; i++) {
         for (int j = 0; j < b->dimY; j++) {
@@ -626,8 +627,10 @@ void setGridDimension(Board *b) {   // Imposta la dimensione della griglia
         }
         dim = strtol(input, &endptr,
                      10); // Converte la stringa in un int, primo parametro la stringa, secondo il puntatore alla fine della stringa (punta a quello che c'e dopo il numero (qualcosa di non valido), quindi volendo si puo usare per verificare piu numeri in basi diverse in un solo input), terzo la base (10 = decimale)
-        if (!(endptr == input || *endptr !=
-                                 '\n')) // Se endptr punta alla fine della stringa (non c'e' altro dopo il numero) allora e' un numero valido
+        if (dim < 2) {
+            printf("La dimensione della griglia deve essere maggiore di 1.\n");
+        } else if (!(endptr == input || *endptr !=
+                                        '\n')) // Se endptr punta alla fine della stringa (non c'e' altro dopo il numero) allora e' un numero valido
             validInput = true; // Esco dal ciclo
     }
     b->dimX = dim;

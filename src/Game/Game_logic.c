@@ -410,10 +410,11 @@ bool canMoveDown(Board *board) {
 
 // Zippo le 4 funzioni in una sola
 bool canMove(Board *board) {
-    if (canMoveRight(board) || canMoveLeft(board) || canMoveUp(board) || canMoveDown(board)) {
-        return true;
-    }
-    return false;
+    return (canMoveRight(board) || canMoveLeft(board) || canMoveUp(board) || canMoveDown(board));
+//    if (canMoveRight(board) || canMoveLeft(board) || canMoveUp(board) || canMoveDown(board)) {
+//        return true;
+//    }
+//    return false;
 }
 
 
